@@ -1,11 +1,17 @@
-from flask import Flask
+from flask import Flask, request, render_template
+import module as md
 
 app = Flask(__name__)
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return "Hello World!"
+    if request.method == "POST":
+        judul = request.form["judul"]
+        recommendation = md.rec_pvdbow(Title=judul)
+        return render_template("index.html", recommendation=recommendation)
+    else:
+        return render_template("index.html")
 
 
 if __name__ == "__main__":
