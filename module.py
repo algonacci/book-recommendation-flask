@@ -75,6 +75,27 @@ titles = data['Title']
 indices = pd.Series(data.index, index=data['Title']).drop_duplicates()
 
 
+def rec_pvdm(Title, pvdm=pvdm):
+    recommendation = pd.DataFrame(columns=['Book Idx', 'Title', 'Score'])
+    count = 0
+
+    idx = indices[Title]
+    sim_scores = list(enumerate(pvdm[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:6]
+    book_indices = [i[0] for i in sim_scores]
+
+    for i in book_indices:
+        recommendation.at[count, 'Book Idx'] = book_indices[count]
+        recommendation.at[count, 'Title'] = titles.iloc[book_indices[count]]
+        recommendation.at[count, 'Score'] = sim_scores[count][1]
+        count += 1
+    table_html = recommendation.to_html(
+        index=False, classes=['table', 'table-striped', 'table-responsive', 'text-center'])
+
+    return table_html
+
+
 def rec_pvdbow(Title, pvdbow=pvdbow):
     recommendation = pd.DataFrame(columns=['Book Idx', 'Title', 'Score'])
     count = 0
@@ -100,6 +121,7 @@ def rec_pvdbow(Title, pvdbow=pvdbow):
 # Function to recommend books based on keywords
 
 
+# Function to recommend books based on keywords
 def recommend_books(keyword, top_n=5):
 
     # Infer PVDM and PVDBOW vectors for the query keyword
@@ -117,9 +139,13 @@ def recommend_books(keyword, top_n=5):
 
     # Sort by similarity score and select the top n books
     recommendations = data.sort_values(by='similarity_score', ascending=False).head(
-        top_n)[['Title', 'Author', 'Genre', 'Deskripsi']]
+        top_n)[['Title', 'Author', 'Genre', 'Deskripsi', 'Sampul']]
+
+    # Add image column to table_html
+    recommendations['Sampul'] = recommendations['Sampul'].apply(
+        lambda x: '<img src="{}" width="100">'.format(x))
 
     table_html = recommendations.to_html(
-        index=False, classes=['table', 'table-striped', 'table-responsive', 'text-center'])
+        index=False, classes=['table', 'table-striped', 'table-responsive', 'text-center'], escape=False)
 
     return table_html
