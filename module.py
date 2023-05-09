@@ -92,6 +92,34 @@ def rec_pvdbow(Title, pvdbow=pvdbow):
         count += 1
 
     # Convert DataFrame to HTML table
-    table_html = recommendation.to_html(index=False)
+    table_html = recommendation.to_html(
+        index=False, classes=['table', 'table-striped', 'table-responsive', 'text-center'])
+
+    return table_html
+
+# Function to recommend books based on keywords
+
+
+def recommend_books(keyword, top_n=5):
+
+    # Infer PVDM and PVDBOW vectors for the query keyword
+    query_vector_pvdm = pvdm_model.infer_vector(keyword.split())
+    query_vector_pvdbow = pvdbow_model.infer_vector(keyword.split())
+
+    # Compute similarity scores using cosine similarity
+    data['pvdm_similarity'] = data['pvdm_vector'].apply(
+        lambda x: cosine_similarity([x], [query_vector_pvdm])[0][0])
+    data['pvdbow_similarity'] = data['pvdbow_vector'].apply(
+        lambda x: cosine_similarity([x], [query_vector_pvdbow])[0][0])
+
+    # PVDM similarity scores
+    data['similarity_score'] = 0.5 * data['pvdm_similarity']
+
+    # Sort by similarity score and select the top n books
+    recommendations = data.sort_values(by='similarity_score', ascending=False).head(
+        top_n)[['Title', 'Author', 'Genre', 'Deskripsi']]
+
+    table_html = recommendations.to_html(
+        index=False, classes=['table', 'table-striped', 'table-responsive', 'text-center'])
 
     return table_html
